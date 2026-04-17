@@ -244,38 +244,28 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
   } else if (ctmp == "Coupled") {
     auto& face_name = com_mod.msh[lBc.iM].fa[lBc.iFa].name;
     const bool svzd_iface = com_mod.cplBC.svzerod_solver_interface.has_data;
-    const bool ci_has_block = bc_params->coupling_interface.value_set &&
-                              bc_params->coupling_interface.svzerod_solver_block.defined();
+    const bool ci_set = bc_params->coupling_interface.value_set;
+    const bool ci_has_block = ci_set && bc_params->coupling_interface.svzerod_solver_block.defined();
 
-    if (svzd_iface && ci_has_block) {
-      if ((lEq.phys == EquationType::phys_struct) || (lEq.phys == EquationType::phys_ustruct)) {
-        if (coupled_bc_type != BoundaryConditionType::bType_Neu) {
-          throw std::runtime_error(
-              "[read_bc] svZeroDSolver-coupled BC for struct/ustruct must use <Type> Neu </Type>.");
-        }
-      } else if ((lEq.phys == EquationType::phys_fluid) || (lEq.phys == EquationType::phys_FSI) ||
-                 (lEq.phys == EquationType::phys_CMM)) {
-        // Fluid/FSI/CMM can use either Dirichlet or Neumann for 0D coupling.
-      } else {
-        throw std::runtime_error("[read_bc] svZeroDSolver Coupled BC used with unsupported physics type.");
-      }
-
+    if (svzd_iface) {
+      // Coupled BC to svZeroDSolver
       lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_Coupled));
       lBc.bType = utils::ibclr(lBc.bType, enum_int(BoundaryConditionType::bType_Dir));
       lBc.bType = utils::ibclr(lBc.bType, enum_int(BoundaryConditionType::bType_Neu));
       lBc.bType = utils::ibclr(lBc.bType, enum_int(BoundaryConditionType::bType_bfs));
       lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_cpl));
 
-    } else if (svzd_iface) {
-      if (bc_params->coupling_interface.value_set &&
-          !bc_params->coupling_interface.svzerod_solver_block.defined()) {
-        throw std::runtime_error(std::string("[read_bc] <Coupling_interface> on face '") + face_name +
-                                 "' must define <svZeroDSolver_block>.");
+      // Sanity check: <Coupling_interface> must define <svZeroDSolver_block>
+      if (!ci_has_block) {
+        if (ci_set) {
+          throw std::runtime_error(std::string("[read_bc] <Coupling_interface> on face '") + face_name +
+                                   "' must define <svZeroDSolver_block>.");
+        }
+        throw std::runtime_error(
+            std::string("[read_bc] With <svZeroDSolver_interface>, each svZeroD-coupled face needs "
+                        "<Coupling_interface> with <svZeroDSolver_block> (Time_dependence Coupled) on face '") +
+            face_name + "'.");
       }
-      throw std::runtime_error(
-          std::string("[read_bc] With <svZeroDSolver_interface>, each svZeroD-coupled face needs "
-                      "<Coupling_interface> with <svZeroDSolver_block> (Time_dependence Coupled) on face '") +
-          face_name + "'.");
 
     } else {
       // genBC / cplBC / svOneD path.
@@ -315,6 +305,8 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
               "[read_bc] <Coupling_interface> is only valid when <svZeroDSolver_interface> or "
               "<svOneDSolver_interface> is defined on the equation.");
         }
+
+
 
         lBc.bType = utils::ibset(lBc.bType, enum_int(BoundaryConditionType::bType_cpl));
         com_mod.cplBC.nFa = com_mod.cplBC.nFa + 1;
@@ -553,6 +545,7 @@ void read_bc(Simulation* simulation, EquationParameters* eq_params, eqType& lEq,
                                                    com_mod.msh[lBc.iM].fa[lBc.iFa].name, zd_block, lEq.phys,
                                                    cpl_flwP);
       }
+
     } else {
       throw std::runtime_error(
           std::string("[read_bc] bType_Coupled is set on face '") + face_name +
@@ -1203,11 +1196,12 @@ void read_cep_domain(Simulation* simulation, EquationParameters* eq_params, Doma
   }
 
   // Set Ttp parameters.
-  // Scalar params
   std::map<Parameter<double>*,double*> simple_ttp_params{
-    {&domain_params->G_Na, &lDmn.cep.ttp.G_Na},
-    {&domain_params->G_Kr, &lDmn.cep.ttp.G_Kr},
-    {&domain_params->G_CaL, &lDmn.cep.ttp.G_CaL}
+    {&domain_params->G_Na,  &lDmn.cep.ttp.G_Na},
+    {&domain_params->G_Kr,  &lDmn.cep.ttp.G_Kr},
+    {&domain_params->G_CaL, &lDmn.cep.ttp.G_CaL},
+    {&domain_params->G_Ks,  &lDmn.cep.ttp.G_Ks},
+    {&domain_params->G_to,  &lDmn.cep.ttp.G_to},
   };
 
   for (auto& [param, value] : simple_ttp_params) {
@@ -1216,12 +1210,8 @@ void read_cep_domain(Simulation* simulation, EquationParameters* eq_params, Doma
     }
   }
 
-  // Array params
-  if (domain_params->G_Ks.defined()) {
-    lDmn.cep.ttp.G_Ks[lDmn.cep.imyo - 1] = domain_params->G_Ks.value();
-  }
-  if (domain_params->G_to.defined()) {
-    lDmn.cep.ttp.G_to[lDmn.cep.imyo - 1] = domain_params->G_to.value();
+  if (model_type == ElectrophysiologyModelType::TTP) {
+    lDmn.cep.ttp.set_initial_conditions(domain_params->ttp_initial_conditions);
   }
 
   // Set stimulus parameters. 
@@ -1346,40 +1336,6 @@ void read_cep_equation(CepMod* cep_mod, Simulation* simulation, EquationParamete
 
     cep_mod->ecgleads.pseudo_ECG.resize(cep_mod->ecgleads.num_leads);
     std::fill(cep_mod->ecgleads.pseudo_ECG.begin(), cep_mod->ecgleads.pseudo_ECG.end(), 0.);
-  }
-}
-
-//--------------------------------
-// read_cplbc_initialization_file
-//--------------------------------
-// Read the float values for a cplBC initialzation.
-//
-void read_cplbc_initialization_file(const std::string& file_name, cplBCType& cplBC) 
-{
-  std::ifstream init_file;
-  init_file.open(file_name);
-  if (!init_file.is_open()) {
-    throw std::runtime_error("Failed to open the cplBC initialization file '" + file_name + "'.");
-  }
-
-  double value;
-  std::string str_value;
-  int n = 0;
-
-  while (init_file >> value) {
-    if (n == cplBC.nX) { 
-      throw std::runtime_error("The number of values in the cplBC initialization file '" + file_name + 
-         "' is larger than the number of values given in the Couple_to_cplBC 'Number_of_unknowns' parameter (" + 
-         std::to_string(cplBC.nX) + ").");
-    }
-    cplBC.xo[n] = value;
-    n += 1;
-  }
-
-  if (n < cplBC.nX) { 
-    throw std::runtime_error("The number of values in the cplBC initialization file '" + file_name + 
-      "' (" + std::to_string(n) + ") is smaller than the number of values given in the Couple_to_cplBC 'Number_of_unknowns' parameter (" + 
-      std::to_string(cplBC.nX) + ").");
   }
 }
 
@@ -1617,12 +1573,9 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
       cplBC.useSv1D = true;
       cplbc_type_str = eq_params->svonedsolver_interface_parameters.coupling_type.value();
       cplBC.sv1d_solver_interface.set_data(eq_params->svonedsolver_interface_parameters);
-
-    } else if (eq_params->couple_to_cplBC.defined()) {
-      cplbc_type_str = eq_params->couple_to_cplBC.type.value();
     }
 
-    if (eq_params->couple_to_genBC.defined() || eq_params->couple_to_cplBC.defined() ||
+    if (eq_params->couple_to_genBC.defined() ||
         eq_params->svzerodsolver_interface_parameters.defined() ||
         eq_params->svonedsolver_interface_parameters.defined()) { 
       try {
@@ -1647,21 +1600,6 @@ void read_eq(Simulation* simulation, EquationParameters* eq_params, eqType& lEq)
       } else if (cplBC.useSv1D) {
         cplBC.nX = 0;
 
-      } else {
-        auto& cplBC_params = eq_params->couple_to_cplBC;
-        cplBC.nX = cplBC_params.number_of_unknowns.value();
-        cplBC.xo.resize(cplBC.nX);
-        cplBC.binPath = cplBC_params.zerod_code_file_path.value();
-        if (cplBC_params.unknowns_initialization_file_path.defined()) { 
-          auto file_name = cplBC_params.unknowns_initialization_file_path.value();
-          read_cplbc_initialization_file(file_name, cplBC); 
-        }
-
-        cplBC.commuName = simulation->chnl_mod.appPath + cplBC_params.file_name_for_0D_3D_communication.value();
-        cplBC.saveName = simulation->chnl_mod.appPath + cplBC_params.file_name_for_saving_unknowns.value();
-
-        cplBC.nXp = cplBC_params.number_of_user_defined_outputs.value();
-        cplBC.xp.resize(cplBC.nXp);
       }
     }
   }

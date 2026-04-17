@@ -11,7 +11,7 @@
 #include "nn.h"
 #include "set_bc.h"
 #include "utils.h"
-#include "svZeroD_subroutines.h"
+#include "svZeroD_interface.h"
 #include "svOneD_subroutines.h"
 
 #include "fsils_api.hpp"
@@ -40,8 +40,13 @@ namespace baf_ini_ns {
 ///
 /// Replicates 'SUBROUTINE BAFINI()' defined in BAFINIT.f
 //
-void baf_ini(Simulation* simulation)
+void baf_ini(Simulation* simulation, SolutionStates& solutions)
 {
+  // Local aliases for solution arrays
+  const auto& Ao = solutions.old.get_acceleration();
+  auto& Do = solutions.old.get_displacement();
+  auto& Yo = solutions.old.get_velocity();
+
   using namespace consts;
   using namespace fsi_linear_solver;
 
@@ -68,7 +73,7 @@ void baf_ini(Simulation* simulation)
         continue;
       }
       auto& face = msh.fa[iFa]; 
-      face_ini(simulation, msh, face);
+      face_ini(simulation, msh, face, solutions);
     }
     if (msh.lShl) {
       shl_ini(com_mod, cm_mod, com_mod.msh[iM]);
@@ -83,10 +88,10 @@ void baf_ini(Simulation* simulation)
       auto& bc = eq.bc[iBc];
       int iFa = bc.iFa;
       int iM = bc.iM;
-      bc_ini(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa]);
+      bc_ini(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], solutions);
 
       if (com_mod.msh[iM].lShl) {
-        shl_bc_ini(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], com_mod.msh[iM]);
+        shl_bc_ini(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], com_mod.msh[iM], solutions);
       }
     }
   }
@@ -150,7 +155,12 @@ void baf_ini(Simulation* simulation)
     }
 
     if (!com_mod.stFileFlag) {
-      set_bc::rcr_init(com_mod, cm_mod);
+      // Create temporary SolutionStates for set_bc calls
+      SolutionStates temp_solutions;
+      temp_solutions.old.get_acceleration() = Ao;
+      temp_solutions.old.get_displacement() = Do;
+      temp_solutions.old.get_velocity() = Yo;
+      set_bc::rcr_init(com_mod, cm_mod, temp_solutions);
     }
 
     if (com_mod.cplBC.useGenBC) {
@@ -166,15 +176,8 @@ void baf_ini(Simulation* simulation)
     }
 
     // Initialize cap integration for Coupled boundary conditions
-    #ifdef debug_baf_ini
-    dmsg << "Initializing cap integration for Coupled BCs...";
-    dmsg << "com_mod.nEq: " << com_mod.nEq;
-    #endif
     for (int iEq = 0; iEq < com_mod.nEq; iEq++) {
       auto& eq = com_mod.eq[iEq];
-      #ifdef debug_baf_ini
-      dmsg << "iEq: " << iEq << " eq.nBc: " << eq.nBc;
-      #endif
       for (int iBc = 0; iBc < eq.nBc; iBc++) {
         auto& bc = eq.bc[iBc];
         if (utils::btest(bc.bType, iBC_Coupled)) {
@@ -186,7 +189,15 @@ void baf_ini(Simulation* simulation)
     }
 
     if (com_mod.cplBC.schm != CplBCType::cplBC_E) {
-      set_bc::calc_der_cpl_bc(com_mod, cm_mod);
+      // Create temporary SolutionStates for set_bc calls
+      SolutionStates temp_solutions;
+      temp_solutions.old.get_acceleration() = Ao;
+      temp_solutions.old.get_displacement() = Do;
+      temp_solutions.old.get_velocity() = Yo;
+      temp_solutions.current.get_acceleration() = Ao;
+      temp_solutions.current.get_velocity() = Yo;
+      temp_solutions.current.get_displacement() = Do;
+      set_bc::calc_der_cpl_bc(com_mod, cm_mod, temp_solutions);
     }
   }
 
@@ -204,7 +215,7 @@ void baf_ini(Simulation* simulation)
       int iFa = bc.iFa;
       int iM = bc.iM;
       bc.lsPtr = 0;
-      fsi_ls_ini(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], lsPtr);
+      fsi_ls_ini(com_mod, cm_mod, bc, com_mod.msh[iM].fa[iFa], lsPtr, solutions);
     }
   }
 
@@ -266,8 +277,11 @@ void baf_ini(Simulation* simulation)
 // bc_ini
 //---------
 //
-void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& lFa)
+void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& lFa, const SolutionStates& solutions)
 {
+  // Local alias for old displacement
+  const auto& Do = solutions.old.get_displacement();
+
   using namespace consts;
   using namespace utils;
 
@@ -328,7 +342,7 @@ void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& l
   } else if (btest(lBc.bType, iBC_para)) { 
     Vector<double> center(3);
     for (int i = 0; i < nsd; i++) {
-      center(i) = all_fun::integ(com_mod, cm_mod, lFa, com_mod.x, i) / lFa.area;
+      center(i) = all_fun::integ(com_mod, cm_mod, lFa, com_mod.x, i, solutions, std::nullopt, false, consts::MechanicalConfigurationType::reference) / lFa.area;
     }
 
     // gNodes is one if a node located on the boundary (beside iFa)
@@ -437,7 +451,7 @@ void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& l
   //
   double tmp = 1.0;
   if (btest(lBc.bType, enum_int(BoundaryConditionType::bType_flx))) { 
-    tmp = all_fun::integ(com_mod, cm_mod, lFa, s);
+    tmp = all_fun::integ(com_mod, cm_mod, lFa, s, solutions, false, consts::MechanicalConfigurationType::reference);
     if (is_zero(tmp)) {
       tmp = 1.0;
       throw std::runtime_error("Face '" + lFa.name + "' used for a BC has no non-zero node.");
@@ -454,8 +468,10 @@ void bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& l
 // face_ini
 //----------
 //
-void face_ini(Simulation* simulation, mshType& lM, faceType& lFa)
+void face_ini(Simulation* simulation, mshType& lM, faceType& lFa, const SolutionStates& solutions)
 {
+  const auto& Do = solutions.old.get_displacement();
+
   using namespace consts;
   auto& com_mod = simulation->com_mod;
   auto& cm = com_mod.cm;
@@ -477,7 +493,7 @@ void face_ini(Simulation* simulation, mshType& lM, faceType& lFa)
   //
   Vector<double> sA(com_mod.tnNo);
   sA = 1.0;
-  double area = all_fun::integ(com_mod, cm_mod, lFa, sA);
+  double area = all_fun::integ(com_mod, cm_mod, lFa, sA, solutions, false, consts::MechanicalConfigurationType::reference);
   #ifdef debug_face_ini
   dmsg << "Face '" << lFa.name << "' area: " << area;
   #endif
@@ -519,7 +535,7 @@ void face_ini(Simulation* simulation, mshType& lM, faceType& lFa)
 
       for (int g = 0; g < lFa.nG; g++) {
         auto Nx = lFa.Nx.slice(g);
-        nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, nV);
+        nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, nV, solutions, consts::MechanicalConfigurationType::reference);
 
         for (int a = 0; a < lFa.eNoN; a++) { 
           int Ac = lFa.IEN(a,e);
@@ -590,7 +606,7 @@ void face_ini(Simulation* simulation, mshType& lM, faceType& lFa)
 
         if (com_mod.mvMsh) {
           for (int i = 0; i < nsd; i++) {
-            xl(i,a) = xl(i,a) + com_mod.Do(i+nsd+1,Ac);
+            xl(i,a) = xl(i,a) + Do(i+nsd+1,Ac);
           }
         }
       }
@@ -702,8 +718,11 @@ void face_ini(Simulation* simulation, mshType& lM, faceType& lFa)
 //
 // Replicates 'SUBROUTINE FSILSINI'.
 //
-void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceType& lFa, int& lsPtr)
+void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceType& lFa, int& lsPtr, const SolutionStates& solutions)
 {
+  // Local alias for old displacement
+  const auto& Do = solutions.old.get_displacement();
+
   using namespace consts;
   using namespace utils;
   using namespace fsi_linear_solver;
@@ -780,7 +799,7 @@ void fsi_ls_ini(ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, const faceTyp
         for (int g = 0; g < lFa.nG; g++) {
           Vector<double> n(nsd);
           auto Nx = lFa.Nx.slice(g);
-          nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, n);
+          nn::gnnb(com_mod, lFa, e, g, nsd, nsd-1, lFa.eNoN, Nx, n, solutions, consts::MechanicalConfigurationType::reference);
 
           for (int a = 0; a < lFa.eNoN; a++) {
             int Ac = lFa.IEN(a,e);
@@ -920,8 +939,11 @@ void set_shl_xien(Simulation* simulation, mshType& lM)
 //
 // Reproduces 'SUBROUTINE SHLBCINI(lBc, lFa, lM)'.
 //
-void shl_bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& lFa, mshType& lM)
+void shl_bc_ini(const ComMod& com_mod, const CmMod& cm_mod, bcType& lBc, faceType& lFa, mshType& lM, const SolutionStates& solutions)
 {
+  // Local alias for old displacement
+  const auto& Do = solutions.old.get_displacement();
+
   using namespace consts;
   using namespace utils;
 

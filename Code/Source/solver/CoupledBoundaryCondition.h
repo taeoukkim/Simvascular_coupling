@@ -5,19 +5,18 @@
 #define COUPLED_BOUNDARY_CONDITION_H
 
 #include <string>
-#include <vector>
 #include <memory>
+#include <exception>
 #include <optional>
 #include <utility>
 #include "consts.h"
-#include "Array.h"
-#include "Vector.h"
+#include "CmMod.h"
+#include "SolutionStates.h"
 
 // Forward declarations to avoid heavy includes
 class LPNSolverInterface;
 class faceType;
 class ComMod;
-class CmMod;
 
 namespace fsi_linear_solver {
     class FSILS_faceType;
@@ -41,6 +40,87 @@ struct CapGlobalMeshState {
         Yo.resize(0, 0);
         Yn.resize(0, 0);
     }
+};
+
+/// @brief Base exception for capping surface (cap VTP) errors.
+///
+/// These indicate fatal errors while loading or using a cap surface. They are not
+/// expected to be recovered; callers may catch \ref CappingSurfaceBaseException to
+/// handle all cap-related failures.
+class CappingSurfaceBaseException : public std::exception {
+public:
+    explicit CappingSurfaceBaseException(std::string msg) : message_(std::move(msg)) {}
+
+    const char* what() const noexcept override { return message_.c_str(); }
+
+private:
+    std::string message_;
+};
+
+/// @brief Cap VTP file cannot be opened.
+class CappingSurfaceFileException : public CappingSurfaceBaseException {
+public:
+    explicit CappingSurfaceFileException(const std::string& path)
+        : CappingSurfaceBaseException("[CappingSurface::load_from_vtp] Cannot open cap VTP file '" + path +
+                                      "' for reading.") {}
+};
+
+/// @brief VTP read, parse, or validation error during cap load.
+class CappingSurfaceVtpException : public CappingSurfaceBaseException {
+public:
+    explicit CappingSurfaceVtpException(const std::string& detail)
+        : CappingSurfaceBaseException("[CappingSurface::load_from_vtp] " + detail) {}
+};
+
+/// @brief Cap mesh shares no nodes with the coupled boundary face.
+class CappingSurfaceCouplingTopologyException : public CappingSurfaceBaseException {
+public:
+    explicit CappingSurfaceCouplingTopologyException(const std::string& vtp_path, const std::string& coupled_face_name)
+        : CappingSurfaceBaseException("[CappingSurface::load_from_vtp] Cap VTP file '" + vtp_path +
+                                      "' has no GlobalNodeID entries in common with coupled face '" +
+                                      coupled_face_name + "'. The cap must share at least one mesh node with that face.") {}
+};
+
+/// @brief Cap VTP uses an unsupported cell type (only TRI3 is supported).
+class CappingSurfaceUnsupportedCellException : public CappingSurfaceBaseException {
+public:
+    explicit CappingSurfaceUnsupportedCellException(int vtk_cell_type)
+        : CappingSurfaceBaseException("[CappingSurface::load_from_vtp] Unsupported cap cell type " +
+                                      std::to_string(vtk_cell_type) + ". Only VTK_TRIANGLE (TRI3) is supported.") {}
+};
+
+/// @brief Cap VTP connectivity does not match expected TRI3 topology.
+class CappingSurfaceInvalidElementNodesException : public CappingSurfaceBaseException {
+public:
+    explicit CappingSurfaceInvalidElementNodesException(int eNoN, int expected)
+        : CappingSurfaceBaseException("[CappingSurface::load_from_vtp] Invalid nodes-per-element for triangle cap: " +
+                                      std::to_string(eNoN) + " (expected " + std::to_string(expected) + ").") {}
+};
+
+/// @brief Geometry or Jacobian error during cap surface integration.
+class CappingSurfaceGeometryException : public CappingSurfaceBaseException {
+public:
+    explicit CappingSurfaceGeometryException(const std::string& detail) : CappingSurfaceBaseException(detail) {}
+};
+
+/// @brief Cap face quadrature (shape functions on TRI3) setup failed.
+class CappingSurfaceQuadratureException : public CappingSurfaceBaseException {
+public:
+    explicit CappingSurfaceQuadratureException(const std::string& nested)
+        : CappingSurfaceBaseException("[CappingSurface::init_cap_face_quadrature] Failed to initialize cap face shape "
+                                      "functions: " + nested) {}
+};
+
+/// @brief Inconsistent cap connectivity or assembly indexing.
+class CappingSurfaceAssemblyException : public CappingSurfaceBaseException {
+public:
+    explicit CappingSurfaceAssemblyException(const std::string& detail) : CappingSurfaceBaseException(detail) {}
+};
+
+/// @brief Failure copying a \ref CappingSurface or its internal face.
+class CappingSurfaceCopyException : public CappingSurfaceBaseException {
+public:
+    explicit CappingSurfaceCopyException(std::string msg) : CappingSurfaceBaseException(std::move(msg)) {}
 };
 
 /// @brief Capping surface geometry and integration for a coupled boundary.
@@ -112,7 +192,7 @@ class CappingSurface {
 ///  - computing flowrates on the face for coupling, and
 ///  - getting/setting pressure values from/to a 0D solver.
 ///
-/// The class manages its own coupling data. svZeroD_subroutines accesses
+/// The class manages its own coupling data. svZeroD interface code accesses
 /// coupled boundary conditions by iterating through com_mod.eq[].bc[].
 class CoupledBoundaryCondition {
 private:
@@ -168,9 +248,11 @@ private:
     /// @brief Reused global-column mesh state for cap gather (allocated on ranks that unpack; includes Yo/Yn rows).
     CapGlobalMeshState cap_global_mesh_state_;
 
+    /// @brief Default CmMod used for cap gather/bcast (master rank id and MPI datatypes; stateless for this use).
+    static const CmMod cm_mod_;
+
     /// Fill \ref cap_global_mesh_state_. Serial: all ranks. Parallel: root only (slaves skip buffer allocation).
-    void gather_global_mesh_state(ComMod& com_mod, const CmMod& cm_mod, const Array<double>& Yo,
-                                  const Array<double>& Yn, bool gather_Y);
+    void gather_global_mesh_state(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& solutions, bool gather_Y);
 
 
 public:
@@ -278,25 +360,26 @@ public:
     /// @brief Compute flowrates at the boundary face at old and new timesteps
     /// @param com_mod ComMod reference containing simulation data
     /// @param cm_mod CmMod reference for communication
-    void compute_flowrates(ComMod& com_mod, const CmMod& cm_mod);
+    void compute_flowrates(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& solutions);
 
     /// @brief Initialize cap quadrature on the master (call from \c baf_ini after partition).
     void initialize_cap(ComMod& com_mod);
 
     /// @brief Gather mesh geometry, compute cap \a valM on master, and copy to FSILS face (all ranks enter MPI gather).
-    void copy_cap_surface_to_linear_solver_face(ComMod& com_mod, const CmMod& cm_mod,
-                                                fsi_linear_solver::FSILS_faceType& lhs_face,
-                                                consts::MechanicalConfigurationType cfg);
+    void copy_cap_surface_to_linear_solver_face(ComMod& com_mod, fsi_linear_solver::FSILS_faceType& lhs_face,
+                                                consts::MechanicalConfigurationType cfg,
+                                                const SolutionStates& solutions);
 
     /// @brief Extra volumetric flux through the cap (old/new timestep); {0,0} if no cap; MPI-safe on all ranks.
     std::pair<double, double> calculate_cap_contribution(ComMod& com_mod, const CmMod& cm_mod,
+                                                         const SolutionStates& solutions,
                                                          consts::MechanicalConfigurationType cfg_o,
                                                          consts::MechanicalConfigurationType cfg_n);
     
     /// @brief Compute average pressures at the boundary face at old and new timesteps (for Dirichlet BCs)
     /// @param com_mod ComMod reference containing simulation data
     /// @param cm_mod CmMod reference for communication
-    void compute_pressures(ComMod& com_mod, const CmMod& cm_mod);
+    void compute_pressures(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& solutions);
 
     /// @brief Get the flowrate at old timestep
     /// @return Flowrate at t_n
@@ -374,8 +457,9 @@ public:
     /// @brief True if this rank stores the cap mesh / quadrature in \ref cap_.
     bool owns_cap() const { return owns_cap_; }
 
+    /// @brief Master reads Neumann pressure, one scalar \c MPI_Bcast, all ranks set pressure (svZeroD sync).
+    void bcast_coupled_neumann_pressure(const CmMod& cm_mod, cmType& cm);
+
 };
-
-
 
 #endif // COUPLED_BOUNDARY_CONDITION_H

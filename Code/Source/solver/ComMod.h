@@ -12,6 +12,7 @@
 
 #include "Array.h"
 #include "Array3.h"
+#include "SolutionStates.h"
 #include "CepMod.h"
 #include "ChnlMod.h"
 #include "CmMod.h"
@@ -35,6 +36,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 #include <fstream>
 #include <sstream>
@@ -200,7 +202,7 @@ class bcType
     // Robin BC class
     RobinBoundaryCondition robin_bc;
 
-    // Coupled BC class <<dev_class>>
+    // Coupled BC class
     CoupledBoundaryCondition coupled_bc;
 
     // svOneD: per-face 1D solver input file path (set when Time_dependence=Coupled
@@ -858,6 +860,12 @@ class cplBCType
 
     /// @brief Number of coupled faces
     int nFa = 0;
+
+    /// @brief Number of \c Time_dependence Coupled BCs for svZeroD (set in \c init_svZeroD).
+    int nSvZeroD_coupled_bc = 0;
+
+    /// @brief (\c iEq, \c iBc) for each svZeroD coupled BC in deterministic traversal order.
+    std::vector<std::pair<int, int>> svZeroD_coupled_bc_idxs;
 
     /// @brief Number of unknowns in the 0D domain
     int nX = 0;
@@ -1786,18 +1794,6 @@ class ComMod {
     /// @brief RIS mapping array, with global (total) enumeration
      std::vector<Array2D> grisMapList;
 
-    /// @brief Old time derivative of variables (acceleration); known result at current time step
-    Array<double>  Ao;
-
-    /// @brief New time derivative of variables (acceleration); unknown result at next time step
-    Array<double>  An;
-
-    /// @brief Old integrated variables (displacement)
-    Array<double>  Do;
-
-    /// @brief New integrated variables (displacement)
-    Array<double>  Dn;
-
     /// @brief Residual vector
     Array<double>  R;
 
@@ -1806,12 +1802,6 @@ class ComMod {
 
     /// @brief Position vector of mesh nodes (in ref config)
     Array<double>  x;
-
-    /// @brief Old variables (velocity); known result at current time step
-    Array<double>  Yo;
-
-    /// @brief New variables (velocity); unknown result at next time step
-    Array<double>  Yn;
 
     /// @brief Body force
     Array<double>  Bf;

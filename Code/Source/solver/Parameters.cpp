@@ -1039,71 +1039,6 @@ void ConstitutiveModelParameters::check_constitutive_model(const Parameter<std::
 }
 
 //////////////////////////////////////////////////////////
-//                  CoupleCplBCParameters               //
-//////////////////////////////////////////////////////////
-
-/// @brief Couple to reduced-order models.
-///
-/// Define the XML element name for equation Couple_to_genBC parameters.
-const std::string CoupleCplBCParameters::xml_element_name_ = "Couple_to_cplBC";
-
-CoupleCplBCParameters::CoupleCplBCParameters()
-{
-  // A parameter that must be defined.
-  bool required = true;
-
-  // Define attributes.
-  type = Parameter<std::string>("type", "", required);
-
-  set_parameter("File_name_for_0D_3D_communication", "", required, file_name_for_0D_3D_communication);
-  set_parameter("File_name_for_saving_unknowns", "", required, file_name_for_saving_unknowns);
-  set_parameter("Number_of_unknowns", 0, required, number_of_unknowns);
-  set_parameter("Number_of_user_defined_outputs", 0, required, number_of_user_defined_outputs);
-  set_parameter("Unknowns_initialization_file_path", "", !required, unknowns_initialization_file_path);
-  set_parameter("ZeroD_code_file_path", "", required, zerod_code_file_path);
-}
-
-void CoupleCplBCParameters::set_values(tinyxml2::XMLElement* xml_elem)
-{
-  std::string error_msg = "Unknown Couple_to_cplBC type=TYPE XML element '";
-
-  // Get the 'type' from the <Couple_to_cplBC type=TYPE> element.
-  const char* stype;
-  auto result = xml_elem->QueryStringAttribute("type", &stype);
-  if (stype == nullptr) {
-    throw std::runtime_error("No TYPE given in the XML <Stimulus=TYPE> element.");
-  }
-  type.set(std::string(stype));
-  auto item = xml_elem->FirstChildElement();
-
-  using std::placeholders::_1;
-  using std::placeholders::_2;
-  std::function<void(const std::string&, const std::string&)> ftpr =
-      std::bind( &CoupleCplBCParameters::set_parameter_value, *this, _1, _2);
-
-  xml_util_set_parameters(ftpr, xml_elem, error_msg);
-
-  value_set = true;
-}
-
-void CoupleCplBCParameters::print_parameters()
-{
-  if (!value_set) { 
-    return;
-  }
-  std::cout << std::endl;
-  std::cout << "----------------------" << std::endl;
-  std::cout << "CoupleCplBC Parameters" << std::endl;
-  std::cout << "----------------------" << std::endl;
-  std::cout << type.name() << ": " << type.value() << std::endl;
-
-  auto params_name_value = get_parameter_list();
-  for (auto& [ key, value ] : params_name_value) {
-    std::cout << key << ": " << value << std::endl;
-  }
-}
-
-//////////////////////////////////////////////////////////
 //                  CoupleGenBCParameters               //
 //////////////////////////////////////////////////////////
 
@@ -1735,9 +1670,12 @@ void DomainParameters::print_parameters()
 
   stimulus.print_parameters();
 
+  ttp_initial_conditions.print_parameters();
+
   fluid_viscosity.print_parameters();
 
   solid_viscosity.print_parameters();
+
 }
 
 //------------
@@ -1779,6 +1717,9 @@ void DomainParameters::set_values(tinyxml2::XMLElement* domain_elem, bool from_e
 
     } else if (name == StimulusParameters::xml_element_name_) {
       stimulus.set_values(item);
+
+    } else if (name == TTPInitialConditionsParameters::xml_element_name_) {
+      ttp_initial_conditions.set_values(item);
 
     } else if (name == FluidViscosityParameters::xml_element_name_ || name == SolidViscosityParameters::xml_element_name_) {
       auto eq_type = consts::equation_name_to_type.at(equation.value());
@@ -1825,6 +1766,187 @@ void DomainParameters::set_values(tinyxml2::XMLElement* domain_elem, bool from_e
       "' in '" + domain_params->Name() + "'.");
   }
 */
+}
+
+//////////////////////////////////////////////////////////
+//            TTPInitialConditionsParameters              //
+//////////////////////////////////////////////////////////
+
+const std::string TTPInitialConditionsParameters::xml_element_name_ = "TTP_initial_conditions";
+
+TTPInitialConditionsParameters::TTPInitialConditionsParameters()
+{
+}
+
+void TTPInitialConditionsParameters::print_parameters()
+{
+  if (value_set) {
+    std::cout << std::endl;
+    std::cout << "TTP Initial Conditions Parameters" << std::endl;
+    std::cout << "---------------------------------" << std::endl;
+    initial_states.print_parameters();
+    gating_variables.print_parameters();
+  }
+}
+
+void TTPInitialConditionsParameters::set_values(tinyxml2::XMLElement* xml_elem)
+{
+  using namespace tinyxml2;
+  std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
+
+  auto item = xml_elem->FirstChildElement();
+
+  while (item != nullptr) {
+    auto name = std::string(item->Value());
+
+    if (name == TTPInitialStatesParameters::xml_element_name_) {
+      initial_states.set_values(item);
+      value_set = true;
+
+    } else if (name == TTPGatingVariablesParameters::xml_element_name_) {
+      gating_variables.set_values(item);
+      value_set = true;
+
+    } else {
+      throw std::runtime_error(error_msg + name + "'.");
+    }
+
+    item = item->NextSiblingElement();
+  }
+
+  if (!initial_states.defined()) {
+    throw std::runtime_error(xml_element_name_ + " requires an '" +
+        TTPInitialStatesParameters::xml_element_name_ + "' XML section.");
+  }
+
+  if (!gating_variables.defined()) {
+    throw std::runtime_error(xml_element_name_ + " requires a '" +
+        TTPGatingVariablesParameters::xml_element_name_ + "' XML section.");
+  }
+}
+
+//////////////////////////////////////////////////////////
+//            TTPInitialStatesParameters                   //
+//////////////////////////////////////////////////////////
+
+const std::string TTPInitialStatesParameters::xml_element_name_ = "Initial_states";
+
+TTPInitialStatesParameters::TTPInitialStatesParameters()
+{
+  bool required = true;
+
+  set_parameter("V",      -85.23,   required, V);
+  set_parameter("K_i",    136.89,   required, K_i);
+  set_parameter("Na_i",   8.6040,   required, Na_i);
+  set_parameter("Ca_i",   1.26E-4,  required, Ca_i);
+  set_parameter("Ca_ss",  3.6E-4,   required, Ca_ss);
+  set_parameter("Ca_sr",  3.64,     required, Ca_sr);
+  set_parameter("R_bar",  0.9073,   required, R_bar);
+}
+
+void TTPInitialStatesParameters::print_parameters()
+{
+  if (value_set) {
+    std::cout << "  Initial States:" << std::endl;
+    auto params_name_value = get_parameter_list();
+    for (auto& [key, value] : params_name_value) {
+      std::cout << "    " << key << ": " << value << std::endl;
+    }
+  }
+}
+
+void TTPInitialStatesParameters::set_values(tinyxml2::XMLElement* xml_elem)
+{
+  using namespace tinyxml2;
+  std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
+
+  auto item = xml_elem->FirstChildElement();
+
+  while (item != nullptr) {
+    auto name = std::string(item->Value());
+
+    if (item->GetText() != nullptr) {
+      auto value = item->GetText();
+      try {
+        set_parameter_value(name, value);
+        value_set = true;
+      } catch (const std::bad_function_call& exception) {
+        throw std::runtime_error(error_msg + name + "'.");
+      }
+    } else {
+      throw std::runtime_error(error_msg + name + "'.");
+    }
+
+    item = item->NextSiblingElement();
+  }
+
+  check_required();
+}
+
+//////////////////////////////////////////////////////////
+//            TTPGatingVariablesParameters                 //
+//////////////////////////////////////////////////////////
+
+const std::string TTPGatingVariablesParameters::xml_element_name_ = "Gating_variables";
+
+TTPGatingVariablesParameters::TTPGatingVariablesParameters()
+{
+  bool required = true;
+
+  set_parameter("x_r1_rectifier", 6.21E-3,   required, x_r1_rectifier);
+  set_parameter("x_r2_rectifier", 0.4712,    required, x_r2_rectifier);
+  set_parameter("x_s_rectifier",  9.5E-3,    required, x_s_rectifier);
+
+  set_parameter("m_fast_Na",      1.72E-3,   required, m_fast_Na);
+  set_parameter("h_fast_Na",      0.7444,    required, h_fast_Na);
+  set_parameter("j_fast_Na",      0.7045,    required, j_fast_Na);
+
+  set_parameter("d_slow_in",      3.373E-5,  required, d_slow_in);
+  set_parameter("f_slow_in",      0.7888,    required, f_slow_in);
+  set_parameter("f2_slow_in",     0.9755,    required, f2_slow_in);
+  set_parameter("fcass_slow_in",  0.9953,    required, fcass_slow_in);
+
+  set_parameter("s_out",          0.999998,  required, s_out);
+  set_parameter("r_out",          2.42E-8,   required, r_out);
+}
+
+void TTPGatingVariablesParameters::print_parameters()
+{
+  if (value_set) {
+    std::cout << "  Gating Variables:" << std::endl;
+    auto params_name_value = get_parameter_list();
+    for (auto& [key, value] : params_name_value) {
+      std::cout << "    " << key << ": " << value << std::endl;
+    }
+  }
+}
+
+void TTPGatingVariablesParameters::set_values(tinyxml2::XMLElement* xml_elem)
+{
+  using namespace tinyxml2;
+  std::string error_msg = "Unknown " + xml_element_name_ + " XML element '";
+
+  auto item = xml_elem->FirstChildElement();
+
+  while (item != nullptr) {
+    auto name = std::string(item->Value());
+
+    if (item->GetText() != nullptr) {
+      auto value = item->GetText();
+      try {
+        set_parameter_value(name, value);
+        value_set = true;
+      } catch (const std::bad_function_call& exception) {
+        throw std::runtime_error(error_msg + name + "'.");
+      }
+    } else {
+      throw std::runtime_error(error_msg + name + "'.");
+    }
+
+    item = item->NextSiblingElement();
+  }
+
+  check_required();
 }
 
 //////////////////////////////////////////////////////////
@@ -2256,8 +2378,6 @@ void EquationParameters::print_parameters()
 
   linear_solver.print_parameters();
 
-  couple_to_cplBC.print_parameters();
-
   for (auto& bc : boundary_conditions) {
     bc->print_parameters();
   }
@@ -2309,9 +2429,6 @@ void EquationParameters::set_values(tinyxml2::XMLElement* eq_elem, DomainParamet
     } else if (name == ConstitutiveModelParameters::xml_element_name_) {
       domain->constitutive_model.set_values(item);
       domain->constitutive_model.check_constitutive_model(type);
-
-    } else if (name == CoupleCplBCParameters::xml_element_name_) {
-      couple_to_cplBC.set_values(item);
 
     } else if (name == CoupleGenBCParameters::xml_element_name_) {
       couple_to_genBC.set_values(item);
@@ -3209,4 +3326,3 @@ void LinearSolverParameters::set_values(tinyxml2::XMLElement* xml_elem)
   }
 
 }
-

@@ -618,32 +618,6 @@ class ConstitutiveModelParameters : public ParameterLists
     bool value_set = false;
 };
 
-/// @brief Couple to reduced-order models.
-class CoupleCplBCParameters : public ParameterLists
-{
-  public:
-    CoupleCplBCParameters();
-
-    static const std::string xml_element_name_;
-
-    bool defined() const { return value_set; };
-    void set_values(tinyxml2::XMLElement* xml_elem);
-    void print_parameters();
-
-    // attribute.
-    Parameter<std::string> type;
-
-    Parameter<std::string> file_name_for_0D_3D_communication;
-    Parameter<std::string> file_name_for_saving_unknowns;
-    Parameter<int> number_of_unknowns;
-    Parameter<int> number_of_user_defined_outputs;
-    Parameter<std::string> unknowns_initialization_file_path;
-
-    Parameter<std::string> zerod_code_file_path;
-
-    bool value_set = false;
-};
-
 /// @brief Coupling to GenBC.
 class CoupleGenBCParameters : public ParameterLists
 {
@@ -1261,6 +1235,81 @@ class FiberReinforcementStressParameters : public ParameterLists
     bool value_set = false;
 };
 
+/// @brief Stores parameters for the 'Gating_variables' XML element
+/// under TTP_initial_conditions.
+class TTPGatingVariablesParameters : public ParameterLists
+{
+  public:
+    TTPGatingVariablesParameters();
+
+    static const std::string xml_element_name_;
+
+    bool defined() const { return value_set; };
+    void print_parameters();
+    void set_values(tinyxml2::XMLElement* xml_elem);
+
+    Parameter<double> x_r1_rectifier;
+    Parameter<double> x_r2_rectifier;
+    Parameter<double> x_s_rectifier;
+
+    Parameter<double> m_fast_Na;
+    Parameter<double> h_fast_Na;
+    Parameter<double> j_fast_Na;
+
+    Parameter<double> d_slow_in;
+    Parameter<double> f_slow_in;
+    Parameter<double> f2_slow_in;
+    Parameter<double> fcass_slow_in;
+
+    Parameter<double> s_out;
+    Parameter<double> r_out;
+
+    bool value_set = false;
+};
+
+/// @brief Stores parameters for the 'Initial_states' XML element
+/// under TTP_initial_conditions.
+class TTPInitialStatesParameters : public ParameterLists
+{
+  public:
+    TTPInitialStatesParameters();
+
+    static const std::string xml_element_name_;
+
+    bool defined() const { return value_set; };
+    void print_parameters();
+    void set_values(tinyxml2::XMLElement* xml_elem);
+
+    Parameter<double> V;
+    Parameter<double> K_i;
+    Parameter<double> Na_i;
+    Parameter<double> Ca_i;
+    Parameter<double> Ca_ss;
+    Parameter<double> Ca_sr;
+    Parameter<double> R_bar;
+
+    bool value_set = false;
+};
+
+/// @brief Stores parameters for the 'TTP_initial_conditions' XML element
+/// under Domain.
+class TTPInitialConditionsParameters : public ParameterLists
+{
+  public:
+    TTPInitialConditionsParameters();
+
+    static const std::string xml_element_name_;
+
+    bool defined() const { return value_set; };
+    void print_parameters();
+    void set_values(tinyxml2::XMLElement* xml_elem);
+
+    TTPInitialStatesParameters initial_states;
+    TTPGatingVariablesParameters gating_variables;
+
+    bool value_set = false;
+};
+
 /// @brief The DomainParameters class stores parameters for the XML
 /// 'Domain' element to specify properties for solving equations.
 ///
@@ -1290,6 +1339,7 @@ class DomainParameters : public ParameterLists
     StimulusParameters stimulus;
     FluidViscosityParameters fluid_viscosity;
     SolidViscosityParameters solid_viscosity;
+    TTPInitialConditionsParameters ttp_initial_conditions;
 
     // Attributes.
     Parameter<std::string> id;
@@ -1473,7 +1523,6 @@ class EquationParameters : public ParameterLists
 
     std::vector<BoundaryConditionParameters*> boundary_conditions;
 
-    CoupleCplBCParameters couple_to_cplBC;
     CoupleGenBCParameters couple_to_genBC;
 
     svZeroDSolverInterfaceParameters svzerodsolver_interface_parameters;
