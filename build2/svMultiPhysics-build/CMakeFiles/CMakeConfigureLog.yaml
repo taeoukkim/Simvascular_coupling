@@ -732,3 +732,88 @@ events:
         
       exitCode: 0
 ...
+
+---
+events:
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/local/share/cmake-3.31/Modules/FindMPI.cmake:1283 (try_compile)"
+      - "/usr/local/share/cmake-3.31/Modules/FindMPI.cmake:1327 (_MPI_try_staged_settings)"
+      - "/usr/local/share/cmake-3.31/Modules/FindMPI.cmake:1650 (_MPI_check_lang_works)"
+      - "CMake/SimVascularMacros.cmake:94 (find_package)"
+      - "CMake/SimVascularExternals.cmake:45 (simvascular_external)"
+      - "CMakeLists.txt:93 (include)"
+    description: "The MPI test test_mpi for C in mode normal"
+    directories:
+      source: "/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/svMultiPhysics-build/CMakeFiles/CMakeScratch/TryCompile-QFrLzS"
+      binary: "/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/svMultiPhysics-build/CMakeFiles/CMakeScratch/TryCompile-QFrLzS"
+    cmakeVariables:
+      CMAKE_C_FLAGS: " -pthread -fpermissive -std=gnu90"
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_MODULE_PATH: "/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/Code/CMake;"
+    buildResult:
+      variable: "MPI_RESULT_C_test_mpi_normal"
+      cached: true
+      stdout: |
+        Change Dir: '/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/svMultiPhysics-build/CMakeFiles/CMakeScratch/TryCompile-QFrLzS'
+        
+        Run Build Command(s): /usr/local/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_604d8/fast
+        gmake[4]: Entering directory '/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/svMultiPhysics-build/CMakeFiles/CMakeScratch/TryCompile-QFrLzS'
+        /usr/bin/gmake  -f CMakeFiles/cmTC_604d8.dir/build.make CMakeFiles/cmTC_604d8.dir/build
+        gmake[5]: Entering directory '/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/svMultiPhysics-build/CMakeFiles/CMakeScratch/TryCompile-QFrLzS'
+        Building C object CMakeFiles/cmTC_604d8.dir/test_mpi.c.o
+        /usr/bin/cc   -pthread -fpermissive -std=gnu90  -o CMakeFiles/cmTC_604d8.dir/test_mpi.c.o -c /home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/svMultiPhysics-build/CMakeFiles/CMakeScratch/TryCompile-QFrLzS/test_mpi.c
+        cc1: warning: command-line option ‘-fpermissive’ is valid for C++/ObjC++ but not for C
+        /home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/svMultiPhysics-build/CMakeFiles/CMakeScratch/TryCompile-QFrLzS/test_mpi.c:1:10: fatal error: mpi.h: No such file or directory
+            1 | #include <mpi.h>
+              |          ^~~~~~~
+        compilation terminated.
+        gmake[5]: *** [CMakeFiles/cmTC_604d8.dir/build.make:81: CMakeFiles/cmTC_604d8.dir/test_mpi.c.o] Error 1
+        gmake[5]: Leaving directory '/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/svMultiPhysics-build/CMakeFiles/CMakeScratch/TryCompile-QFrLzS'
+        gmake[4]: *** [Makefile:134: cmTC_604d8/fast] Error 2
+        gmake[4]: Leaving directory '/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/svMultiPhysics-build/CMakeFiles/CMakeScratch/TryCompile-QFrLzS'
+        
+      exitCode: 2
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/local/share/cmake-3.31/Modules/FindMPI.cmake:1283 (try_compile)"
+      - "/usr/local/share/cmake-3.31/Modules/FindMPI.cmake:1327 (_MPI_try_staged_settings)"
+      - "/usr/local/share/cmake-3.31/Modules/FindMPI.cmake:1650 (_MPI_check_lang_works)"
+      - "CMake/SimVascularMacros.cmake:94 (find_package)"
+      - "CMake/SimVascularExternals.cmake:45 (simvascular_external)"
+      - "CMakeLists.txt:93 (include)"
+    description: "The MPI test test_mpi for CXX in mode normal"
+    directories:
+      source: "/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/svMultiPhysics-build/CMakeFiles/CMakeScratch/TryCompile-VrudM7"
+      binary: "/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/svMultiPhysics-build/CMakeFiles/CMakeScratch/TryCompile-VrudM7"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -fpermissive"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_MODULE_PATH: "/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/Code/CMake;"
+    buildResult:
+      variable: "MPI_RESULT_CXX_test_mpi_normal"
+      cached: true
+      stdout: |
+        Change Dir: '/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/svMultiPhysics-build/CMakeFiles/CMakeScratch/TryCompile-VrudM7'
+        
+        Run Build Command(s): /usr/local/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_0575a/fast
+        gmake[4]: Entering directory '/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/svMultiPhysics-build/CMakeFiles/CMakeScratch/TryCompile-VrudM7'
+        /usr/bin/gmake  -f CMakeFiles/cmTC_0575a.dir/build.make CMakeFiles/cmTC_0575a.dir/build
+        gmake[5]: Entering directory '/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/svMultiPhysics-build/CMakeFiles/CMakeScratch/TryCompile-VrudM7'
+        Building CXX object CMakeFiles/cmTC_0575a.dir/test_mpi.cpp.o
+        /usr/bin/g++   -fpermissive  -o CMakeFiles/cmTC_0575a.dir/test_mpi.cpp.o -c /home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/svMultiPhysics-build/CMakeFiles/CMakeScratch/TryCompile-VrudM7/test_mpi.cpp
+        /home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/svMultiPhysics-build/CMakeFiles/CMakeScratch/TryCompile-VrudM7/test_mpi.cpp:1:10: fatal error: mpi.h: No such file or directory
+            1 | #include <mpi.h>
+              |          ^~~~~~~
+        compilation terminated.
+        gmake[5]: *** [CMakeFiles/cmTC_0575a.dir/build.make:81: CMakeFiles/cmTC_0575a.dir/test_mpi.cpp.o] Error 1
+        gmake[5]: Leaving directory '/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/svMultiPhysics-build/CMakeFiles/CMakeScratch/TryCompile-VrudM7'
+        gmake[4]: *** [Makefile:134: cmTC_0575a/fast] Error 2
+        gmake[4]: Leaving directory '/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/svMultiPhysics-build/CMakeFiles/CMakeScratch/TryCompile-VrudM7'
+        
+      exitCode: 2
+...

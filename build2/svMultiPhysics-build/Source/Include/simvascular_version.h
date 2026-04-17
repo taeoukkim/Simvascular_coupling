@@ -32,8 +32,8 @@
 #define SV_VERSION "simvascular"
 #define SV_MAJOR_VERSION "2026"
 #define SV_MINOR_VERSION "04"
-#define SV_PATCH_VERSION "16"
-#define SV_FULL_VERSION "2026.04.16"
+#define SV_PATCH_VERSION "17"
+#define SV_FULL_VERSION "2026.04.17"
 
 /* Our Version defines */
 #define SV_MAJOR_VER_NO "2026"
