@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/CMakeFiles/svMultiPhysics"
+		},
+		{
+			"file" : "/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/CMakeFiles/svMultiPhysics.rule"
+		},
+		{
+			"file" : "/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/CMakeFiles/svMultiPhysics-complete.rule"
+		},
+		{
+			"file" : "/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/svMultiPhysics-prefix/src/svMultiPhysics-stamp/svMultiPhysics-build.rule"
+		},
+		{
+			"file" : "/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/svMultiPhysics-prefix/src/svMultiPhysics-stamp/svMultiPhysics-configure.rule"
+		},
+		{
+			"file" : "/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/svMultiPhysics-prefix/src/svMultiPhysics-stamp/svMultiPhysics-download.rule"
+		},
+		{
+			"file" : "/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/svMultiPhysics-prefix/src/svMultiPhysics-stamp/svMultiPhysics-install.rule"
+		},
+		{
+			"file" : "/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/svMultiPhysics-prefix/src/svMultiPhysics-stamp/svMultiPhysics-mkdir.rule"
+		},
+		{
+			"file" : "/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/svMultiPhysics-prefix/src/svMultiPhysics-stamp/svMultiPhysics-patch.rule"
+		},
+		{
+			"file" : "/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/svMultiPhysics-prefix/src/svMultiPhysics-stamp/svMultiPhysics-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"svMultiPhysics"
+		],
+		"name" : "svMultiPhysics"
+	}
+}

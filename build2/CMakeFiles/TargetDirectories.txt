@@ -1,0 +1,4 @@
+/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/CMakeFiles/Externals.dir
+/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/CMakeFiles/svMultiPhysics.dir
+/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/CMakeFiles/edit_cache.dir
+/home/runner/work/3D-1D-coupling-dev/3D-1D-coupling-dev/build2/CMakeFiles/rebuild_cache.dir
