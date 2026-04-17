@@ -98,10 +98,16 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
       }
     }
 
-    // Compute flowrates at 3D Neumann0D boundaries at timesteps n and n+1 for Coupled BCs
+    // Compute flowrates/pressures at 3D coupled boundaries for Coupled BCs
     if (utils::btest(bc.bType, iBC_Coupled)) {
-      bc.coupled_bc.compute_flowrates(com_mod, cm_mod);
-      #ifdef debug_calc_der_cpl_bc 
+      if (cplBC.useSv1D &&
+          bc.coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Dir) {
+        // For svOneD DIR coupling the 1D solver needs the 3D face pressure.
+        bc.coupled_bc.compute_pressures(com_mod, cm_mod);
+      } else {
+        bc.coupled_bc.compute_flowrates(com_mod, cm_mod);
+      }
+      #ifdef debug_calc_der_cpl_bc
       dmsg << "iBC_Coupled ";
       dmsg << "coupled_bc.Qo: " << bc.coupled_bc.get_Qo();
       dmsg << "coupled_bc.Qn: " << bc.coupled_bc.get_Qn();
@@ -270,7 +276,11 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod)
       
       // Perturb flowrate and compute new pressure
       bc.coupled_bc.perturb_flowrate(diff);
-      svZeroD::calc_svZeroD(com_mod, cm_mod, 'D');
+      if (cplBC.useSv1D) {
+        svOneD::calc_svOneD(com_mod, cm_mod, 'D');
+      } else {
+        svZeroD::calc_svZeroD(com_mod, cm_mod, 'D');
+      }
       
       // Finite difference: dP/dQ
       bc.r = (bc.coupled_bc.get_pressure() - orig_state.pressure) / diff;
@@ -790,9 +800,15 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod)
       }
 
 
-      // Compute flowrates at 3D Neumann0D boundaries at timesteps n and n+1 for Coupled BCs
+      // Compute flowrates/pressures at 3D coupled boundaries for Coupled BCs
       if (utils::btest(bc.bType, iBC_Coupled)) {
-        bc.coupled_bc.compute_flowrates(com_mod, cm_mod);
+        if (cplBC.useSv1D &&
+            bc.coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Dir) {
+          // For svOneD DIR coupling the 1D solver needs the 3D face pressure.
+          bc.coupled_bc.compute_pressures(com_mod, cm_mod);
+        } else {
+          bc.coupled_bc.compute_flowrates(com_mod, cm_mod);
+        }
       }
       
       if (ptr != -1) {
