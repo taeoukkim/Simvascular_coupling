@@ -54,6 +54,7 @@ CoupledBoundaryCondition& CoupledBoundaryCondition::operator=(const CoupledBound
         block_name_ = other.block_name_;
         face_name_ = other.face_name_;
         oned_input_file_ = other.oned_input_file_;
+        Qo_ = other.Qo_;
         Qn_ = other.Qn_;
         Po_ = other.Po_;
         Pn_ = other.Pn_;
@@ -81,6 +82,7 @@ CoupledBoundaryCondition::CoupledBoundaryCondition(CoupledBoundaryCondition&& ot
     , block_name_(std::move(other.block_name_))
     , face_name_(std::move(other.face_name_))
     , oned_input_file_(std::move(other.oned_input_file_))
+    , Qo_(other.Qo_)
     , Qn_(other.Qn_)
     , Po_(other.Po_)
     , Pn_(other.Pn_)
@@ -123,6 +125,7 @@ CoupledBoundaryCondition& CoupledBoundaryCondition::operator=(CoupledBoundaryCon
         block_name_ = std::move(other.block_name_);
         face_name_ = std::move(other.face_name_);
         oned_input_file_ = std::move(other.oned_input_file_);
+        Qo_ = other.Qo_;
         Qn_ = other.Qn_;
         Po_ = other.Po_;
         Pn_ = other.Pn_;
