@@ -678,7 +678,7 @@ void gather_global_mesh_state_parallel(ComMod& com_mod, const CmMod& cm_mod, cmT
 /// @param solutions Old/current displacement and velocity for gather.
 /// @param gather_Y If true, gather Yo/Yn with \c nsd rows per node; if false, geometry only (x, Do, Dn).
 void CoupledBoundaryCondition::gather_global_mesh_state(ComMod& com_mod, const CmMod& cm_mod,
-                                                        const SolutionStates& solutions, bool gather_Y)
+                                                        const SolutionStates& solutions, bool gather_Y) const
 {
     auto& cm = com_mod.cm;
     const int nsd = com_mod.nsd;
@@ -1296,7 +1296,7 @@ void bcast_cap_lhs_contribution(ComMod& com_mod, const CmMod& cm_mod,
 void CoupledBoundaryCondition::copy_cap_surface_to_linear_solver_face(ComMod& com_mod,
                                                                       fsi_linear_solver::FSILS_faceType& lhs_face,
                                                                       consts::MechanicalConfigurationType cfg,
-                                                                      const SolutionStates& solutions)
+                                                                      const SolutionStates& solutions) const
 {
     const int nsd = com_mod.nsd;
 

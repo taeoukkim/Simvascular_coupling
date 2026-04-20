@@ -246,13 +246,13 @@ private:
     /// @brief Cap geometry on ranks with \ref owns_cap_; empty on non-owning MPI ranks.
     std::optional<CappingSurface> cap_;
     /// @brief Reused global-column mesh state for cap gather (allocated on ranks that unpack; includes Yo/Yn rows).
-    CapGlobalMeshState cap_global_mesh_state_;
+    mutable CapGlobalMeshState cap_global_mesh_state_;
 
     /// @brief Default CmMod used for cap gather/bcast (master rank id and MPI datatypes; stateless for this use).
     static const CmMod cm_mod_;
 
     /// Fill \ref cap_global_mesh_state_. Serial: all ranks. Parallel: root only (slaves skip buffer allocation).
-    void gather_global_mesh_state(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& solutions, bool gather_Y);
+    void gather_global_mesh_state(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates& solutions, bool gather_Y) const;
 
 
 public:
@@ -368,7 +368,7 @@ public:
     /// @brief Gather mesh geometry, compute cap \a valM on master, and copy to FSILS face (all ranks enter MPI gather).
     void copy_cap_surface_to_linear_solver_face(ComMod& com_mod, fsi_linear_solver::FSILS_faceType& lhs_face,
                                                 consts::MechanicalConfigurationType cfg,
-                                                const SolutionStates& solutions);
+                                                const SolutionStates& solutions) const;
 
     /// @brief Extra volumetric flux through the cap (old/new timestep); {0,0} if no cap; MPI-safe on all ranks.
     std::pair<double, double> calculate_cap_contribution(ComMod& com_mod, const CmMod& cm_mod,
