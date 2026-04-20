@@ -1078,7 +1078,7 @@ Array<double> CappingSurface::update_element_position_global(int e, consts::Mech
 /// @param e The element index.
 /// @param g The Gauss point index.
 /// @return The Jacobian and normal vector.
-std::pair<double, Vector<double>> CappingSurface::compute_jacobian_and_normal(const Array<double>& xl, int e, int g)
+std::pair<double, Vector<double>> CappingSurface::compute_jacobian_and_normal(const Array<double>& xl, int e, int g) const
 {
     if (xl.nrows() != cap_nsd_ || xl.ncols() != face_->eNoN) {
         throw CappingSurfaceGeometryException("[CappingSurface::compute_jacobian_and_normal] xl has wrong dimensions: " +
@@ -1180,7 +1180,7 @@ double CappingSurface::integrate_velocity_flux(const CapGlobalMeshState& st, boo
 /// @brief Computes the cap contribution to the linear solver face.
 /// @param cfg The mechanical configuration type.
 /// @param st The cap global mesh state.
-void CappingSurface::compute_valM(consts::MechanicalConfigurationType cfg, const CapGlobalMeshState& st)
+void CappingSurface::compute_valM(consts::MechanicalConfigurationType cfg, const CapGlobalMeshState& st) const
 {
     int cap_nNo = face_->nNo;
 

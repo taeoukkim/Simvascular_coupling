@@ -152,10 +152,10 @@ class CappingSurface {
             consts::MechanicalConfigurationType cfg);
 
         /// @brief Compute the cap contribution to the linear solver face.
-        void compute_valM(consts::MechanicalConfigurationType cfg, const CapGlobalMeshState& st);
+        void compute_valM(consts::MechanicalConfigurationType cfg, const CapGlobalMeshState& st) const;
 
         /// @brief Get the cap face.
-        faceType* face() { return face_.get(); }
+        const faceType* face() const { return face_.get(); }
 
         /// @brief Get the cap contribution.
         const Array<double>& valM() const { return valM_; }
@@ -174,7 +174,7 @@ class CappingSurface {
         static constexpr int cap_insd_ = 2; 
 
         /// @brief The cap contribution.
-        Array<double> valM_;
+        mutable Array<double> valM_;
 
         /// @brief Update the element position in global coordinates.
         Array<double> update_element_position_global(int e, consts::MechanicalConfigurationType cfg,
@@ -182,7 +182,7 @@ class CappingSurface {
                                                      const Array<double>& mesh_Dn, int gtnNo_cols) const;
     
         /// @brief Compute the Jacobian and normal vector for a given element and Gauss point.
-        std::pair<double, Vector<double>> compute_jacobian_and_normal(const Array<double>& xl, int e, int g);
+        std::pair<double, Vector<double>> compute_jacobian_and_normal(const Array<double>& xl, int e, int g) const;
     };
 
 /// @brief Object-oriented Coupled boundary condition on a cap face
