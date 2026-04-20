@@ -111,9 +111,9 @@ void calc_der_cpl_bc(ComMod& com_mod, const CmMod& cm_mod, const SolutionStates&
     // NEU coupling: the downstream solver is driven by the 3D outflow Q.
     if (utils::btest(bc.bType, iBC_Coupled)) {
       if (bc.coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Dir) {
-        bc.coupled_bc.compute_pressures(com_mod, cm_mod);
+        bc.coupled_bc.compute_pressures(com_mod, cm_mod, solutions);
       } else {
-        bc.coupled_bc.compute_flowrates(com_mod, cm_mod);
+        bc.coupled_bc.compute_flowrates(com_mod, cm_mod, solutions);
       }
       #ifdef debug_calc_der_cpl_bc
       dmsg << "iBC_Coupled ";
@@ -800,9 +800,9 @@ void set_bc_cpl(ComMod& com_mod, CmMod& cm_mod, const SolutionStates& solutions)
       // NEU coupling: the downstream solver is driven by the 3D outflow Q.
       if (utils::btest(bc.bType, iBC_Coupled)) {
         if (bc.coupled_bc.get_bc_type() == consts::BoundaryConditionType::bType_Dir) {
-          bc.coupled_bc.compute_pressures(com_mod, cm_mod);
+          bc.coupled_bc.compute_pressures(com_mod, cm_mod, solutions);
         } else {
-          bc.coupled_bc.compute_flowrates(com_mod, cm_mod);
+          bc.coupled_bc.compute_flowrates(com_mod, cm_mod, solutions);
         }
       }
       
