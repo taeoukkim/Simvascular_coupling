@@ -12,6 +12,7 @@
 #include "set_bc.h"
 #include "utils.h"
 #include "svZeroD_subroutines.h"
+#include "sv1D_subroutines.h"
 
 #include "fsils_api.hpp"
 #include "fils_struct.hpp"
@@ -150,6 +151,10 @@ void baf_ini(Simulation* simulation)
 
     if (com_mod.cplBC.useSvZeroD) {
       svZeroD::init_svZeroD(com_mod, cm_mod);
+    }
+
+    if (com_mod.cplBC.useSv1D) {
+      sv1D::init_sv1D(com_mod, cm_mod);
     }
 
     // Initialize cap integration for Coupled boundary conditions

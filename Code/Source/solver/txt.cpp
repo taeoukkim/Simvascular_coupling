@@ -13,6 +13,7 @@
 #include "utils.h"
 #include <math.h>
 #include "svZeroD_subroutines.h"
+#include "sv1D_subroutines.h"
 
 namespace txt_ns {
 
@@ -174,6 +175,9 @@ void txt(Simulation* simulation, const bool init_write)
 
         } else if (cplBC.useSvZeroD){
           svZeroD::calc_svZeroD(com_mod, cm_mod, 'L');
+
+        } else if (cplBC.useSv1D) {
+          sv1D::calc_sv1D(com_mod, cm_mod, 'L');
           
         } else {
 
