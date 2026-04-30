@@ -131,6 +131,12 @@ double&#160;</td><td class="memItemRight" valign="bottom"><b>relax_factor</b> = 
 <tr class="memitem:a60c5ab0e9203357f9570c6aa484df584" id="r_a60c5ab0e9203357f9570c6aa484df584"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsv_one_d_1_1_one_d_model_state.html#a60c5ab0e9203357f9570c6aa484df584">P_neu_prev</a> = 0.0</td></tr>
 <tr class="memdesc:a60c5ab0e9203357f9570c6aa484df584"><td class="mdescLeft">&#160;</td><td class="mdescRight">Under-relaxed pressure output on last 'L' step (NEU only).  <br /></td></tr>
 <tr class="separator:a60c5ab0e9203357f9570c6aa484df584"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab3d95c0588a08b6ea1c70202ce845864" id="r_ab3d95c0588a08b6ea1c70202ce845864"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsv_one_d_1_1_one_d_model_state.html#ab3d95c0588a08b6ea1c70202ce845864">Q_prev_sent_old</a> = 0.0</td></tr>
+<tr class="memdesc:ab3d95c0588a08b6ea1c70202ce845864"><td class="mdescLeft">&#160;</td><td class="mdescRight">Under-relaxed flow rate sent at params[3] (t_old) on last 'L' step (NEU).  <br /></td></tr>
+<tr class="separator:ab3d95c0588a08b6ea1c70202ce845864"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a545d47491d83a89f7622647f26bf5b96" id="r_a545d47491d83a89f7622647f26bf5b96"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsv_one_d_1_1_one_d_model_state.html#a545d47491d83a89f7622647f26bf5b96">Q_prev_sent_new</a> = 0.0</td></tr>
+<tr class="memdesc:a545d47491d83a89f7622647f26bf5b96"><td class="mdescLeft">&#160;</td><td class="mdescRight">Under-relaxed flow rate sent at params[4] (t_new) on last 'L' step (NEU).  <br /></td></tr>
+<tr class="separator:a545d47491d83a89f7622647f26bf5b96"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Data Documentation</h2>
 <a id="a60c5ab0e9203357f9570c6aa484df584" name="a60c5ab0e9203357f9570c6aa484df584"></a>
@@ -194,6 +200,38 @@ double&#160;</td><td class="memItemRight" valign="bottom"><b>relax_factor</b> = 
 </div><div class="memdoc">
 
 <p>Under-relaxed flow rate output on last 'L' step (DIR only). </p>
+
+</div>
+</div>
+<a id="a545d47491d83a89f7622647f26bf5b96" name="a545d47491d83a89f7622647f26bf5b96"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a545d47491d83a89f7622647f26bf5b96">&#9670;&#160;</a></span>Q_prev_sent_new</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double svOneD::OneDModelState::Q_prev_sent_new = 0.0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Under-relaxed flow rate sent at params[4] (t_new) on last 'L' step (NEU). </p>
+
+</div>
+</div>
+<a id="ab3d95c0588a08b6ea1c70202ce845864" name="ab3d95c0588a08b6ea1c70202ce845864"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab3d95c0588a08b6ea1c70202ce845864">&#9670;&#160;</a></span>Q_prev_sent_old</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double svOneD::OneDModelState::Q_prev_sent_old = 0.0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Under-relaxed flow rate sent at params[3] (t_old) on last 'L' step (NEU). </p>
 
 </div>
 </div>
