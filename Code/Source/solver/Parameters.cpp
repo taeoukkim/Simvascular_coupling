@@ -403,9 +403,9 @@ CouplingInterfaceParameters::CouplingInterfaceParameters()
   set_parameter("svZeroDSolver_block",    "", !required, svzerod_solver_block);
   set_parameter("Chamber_cap_surface",    "", !required, chamber_cap_surface);
   set_parameter("svOneDSolver_input_file","", !required, svoned_input_file);
-  set_parameter("Coupling_ramp_steps",       0,   !required, coupling_ramp_steps);
-  set_parameter("Coupling_ramp_ref_pressure", 0.0, !required, coupling_ramp_ref_pressure);
-  set_parameter("Coupling_relax_factor",  1.0, !required, coupling_relax_factor);
+  set_parameter("Ramp_steps",       0,   !required, coupling_ramp_steps);
+  set_parameter("Ramp_ref_pressure", 0.0, !required, coupling_ramp_ref_pressure);
+  set_parameter("Relax_factor",  1.0, !required, coupling_relax_factor);
 }
 
 void CouplingInterfaceParameters::set_values(tinyxml2::XMLElement* xml_elem)
@@ -2541,6 +2541,7 @@ GeneralSimulationParameters::GeneralSimulationParameters()
   set_parameter("Include_xml", "", !required, include_xml);
   set_parameter("Increment_in_saving_restart_files", 0, !required, increment_in_saving_restart_files);
   set_parameter("Increment_in_saving_VTK_files", 0, !required, increment_in_saving_vtk_files);
+  set_parameter("Initial_pressure_scalar", 0.0, !required, initial_pressure);
 
   set_parameter("Name_prefix_of_saved_VTK_files", "", !required, name_prefix_of_saved_vtk_files);
   set_parameter("Number_of_initialization_time_steps", 0, !required, number_of_initialization_time_steps, {0,int_inf});
